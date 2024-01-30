@@ -6,12 +6,17 @@ use App\Filament\Resources\EmployeeResource\Pages;
 use App\Filament\Resources\EmployeeResource\RelationManagers;
 use App\Models\Employee;
 use Filament\Forms;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Collection;
+use App\Models\State;
+use App\Models\City;
 
 class EmployeeResource extends Resource
 {
@@ -42,14 +47,31 @@ class EmployeeResource extends Resource
                     ->description('Put the employee location details in.')
                     ->schema([
                         Forms\Components\Select::make('country_id')
+                            ->relationship('country', 'name')
                             ->required()
-                            ->relationship('country', 'name'),
+                            ->searchable()
+                            ->preload()
+                            ->live()
+                            ->afterStateUpdated(function (Set $set) {
+                                $set('state_id', null);
+                                $set('city_id', null);
+                            }),
                         Forms\Components\Select::make('state_id')
+                            ->options(fn (Get $get): Collection => State::query()
+                                ->where('country_id', $get('country_id'))
+                                ->pluck('name', 'id'))
                             ->required()
-                            ->relationship('state', 'name'),
+                            ->searchable()
+                            ->preload()
+                            ->live()
+                            ->afterStateUpdated(fn (Set $set) => $set('city_id', null)),
                         Forms\Components\Select::make('city_id')
+                            ->options(fn (Get $get): Collection => City::query()
+                                ->where('state_id', $get('state_id'))
+                                ->pluck('name', 'id'))
                             ->required()
-                            ->relationship('city', 'name'),
+                            ->searchable()
+                            ->preload(),
                         Forms\Components\TextInput::make('zip_code')
                             ->required()
                             ->maxLength(255),
@@ -60,7 +82,9 @@ class EmployeeResource extends Resource
                     ])->columns(2),
                 Forms\Components\Select::make('department_id')
                     ->required()
-                    ->relationship('department', 'name'),
+                    ->relationship('department', 'name')
+                    ->searchable()
+                    ->preload(),
                 Forms\Components\DatePicker::make('date_hire')
                     ->required(),
             ]);
