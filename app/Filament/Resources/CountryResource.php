@@ -50,8 +50,10 @@ class CountryResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('code')
+                    ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('name')
+                    ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('phonecode')
                     ->searchable(),
