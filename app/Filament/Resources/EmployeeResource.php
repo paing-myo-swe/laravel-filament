@@ -33,6 +33,13 @@ class EmployeeResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
 
     protected static ?string $navigationGroup = 'Employee Management';
+    
+    protected static ?string $recordTitleAttribute = 'first_name';
+
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
+    }
 
     public static function form(Form $form): Form
     {
